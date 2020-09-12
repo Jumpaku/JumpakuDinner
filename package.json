@@ -1,0 +1,36 @@
+{
+  "name": "workdir",
+  "version": "1.0.0",
+  "description": "Hello from TypeScript and React on webpack!",
+  "main": "bundle.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "webpack-dev-server --open",
+    "build": "webpack"
+  },
+  "keywords": [],
+  "author": "Jumpaku",
+  "license": "BSD-2-Clause",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jumpaku/React-Dev.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Jumpaku/React-Dev/issues"
+  },
+  "homepage": "https://github.com/Jumpaku/React-Dev#readme",
+  "devDependencies": {
+    "@types/react": "^16.9.49",
+    "@types/react-dom": "^16.9.8",
+    "source-map-loader": "^1.1.0",
+    "ts-loader": "^8.0.3",
+    "typescript": "^4.0.2",
+    "webpack": "^4.44.1",
+    "webpack-cli": "^3.3.12",
+    "webpack-dev-server": "^3.11.0"
+  },
+  "dependencies": {
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1"
+  }
+}
