@@ -10,7 +10,6 @@ RUN npm install -y
 
 COPY tsconfig.json /workdir/tsconfig.json
 
-
 COPY src /workdir/src
 COPY gen-scripts /workdir/gen-scripts
 COPY index.html /workdir/index.html
