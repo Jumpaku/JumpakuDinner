@@ -1,0 +1,94 @@
+/* for smart phone */
+@media (orientation: portrait) {
+    :root {
+        --app-width: 90vw;
+        --app-height: 130vw;
+    }
+}
+/* for pc */
+@media (orientation: landscape) {
+    :root {
+        --app-width: calc(90vh*9/13);
+        --app-height: 90vh;
+    }
+}
+:root {
+    --fonts: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+}
+
+
+#app {
+    width: var(--app-width);
+    height: var(--app-height);
+    margin: 0 auto;
+}
+
+#app *{
+    font-family: var(--fonts);
+}
+h1, h2 {
+    margin: 0 auto;
+    width: calc(var(--app-width)*1);
+    margin-top: calc(var(--app-height)*0.04);
+    padding-left: calc(var(--app-width)*0.02);
+}
+
+/* App title */
+h1 {
+    text-align: center;
+    font-size: calc(var(--app-height)*0.08);
+}
+h1 a:hover {
+    text-decoration-line: underline;
+}
+
+/* Section header*/
+h2 {
+    font-size: calc(var(--app-height)*0.05);
+    border-left: solid 2px black;
+    border-bottom: solid 2px black;
+}
+
+/* Images */
+.dishImages {
+    margin: 0 auto;
+    margin-top: calc(var(--app-height)*0.01);
+    margin-bottom: calc(var(--app-height)*0.01);
+    padding-top: calc(var(--app-height)*0.01);
+    padding-bottom: calc(var(--app-height)*0.01);
+    width: var(--app-width);
+    text-align: center;
+}
+.dishImages img {
+    width: calc(var(--app-width)*0.95);
+}
+
+dt, dd, p {
+    width: calc(var(--app-width)*1);
+    margin-top: calc(var(--app-height)*0.02);
+
+}
+dt {
+    padding-left: calc(var(--app-width)*0.04);
+    font-size: calc(var(--app-height)*0.03);
+}
+dd {
+    padding-left: calc(var(--app-width)*0.08);
+    font-size: calc(var(--app-height)*0.03);
+}
+p {
+    padding-bottom: calc(var(--app-height)*0.1);
+    padding-left: calc(var(--app-width)*0.04);
+    font-size: calc(var(--app-height)*0.03);
+}
+/*
+for debug
+*/
+/*
+img {
+    width: 20%;
+}
+*{
+    border: solid 1px black;
+}
+*/

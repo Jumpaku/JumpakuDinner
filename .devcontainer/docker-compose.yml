@@ -1,0 +1,11 @@
+version: '3'
+
+services: 
+  jumpaku-dinner:
+    build: './'
+    working_dir: '/workdir/'
+    command: ["sleep", "infinity"]
+    volumes: 
+      - './../:/workdir/:delegated'
+    ports:
+      - '9000:9000'

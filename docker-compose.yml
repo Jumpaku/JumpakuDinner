@@ -1,0 +1,9 @@
+version: '3'
+
+services: 
+    jumpaku-dinner:
+        build: './'
+        ports: 
+            - '8080:80'
+        #environment: 
+        #    - "SERVER_NAME=localhost"

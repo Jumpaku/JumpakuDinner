@@ -1,0 +1,14 @@
+{
+    "name": "jumpaku-dinner",
+    "dockerComposeFile": "./docker-compose.yml",
+    "service": "jumpaku-dinner",
+    "workspaceFolder": "/workdir/",
+    "extensions": [
+        "streetsidesoftware.code-spell-checker",
+        "donjayamanne.githistory"
+    ],
+    "settings": {
+        "editor.formatOnSave": false,
+        "editor.wordWrap": "on"
+    }
+}
