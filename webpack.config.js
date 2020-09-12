@@ -1,7 +1,7 @@
 module.exports = {
   /**mode: "production",/*/
-  mode: 'development',//*/
-
+  mode: 'development',
+  //*/
   watch: true,
 
   entry: './src/index.tsx',
@@ -45,13 +45,13 @@ module.exports = {
   // assume a corresponding global variable exists and use that instead.
   // This is important because it allows us to avoid bundling all of our
   // dependencies, which allows browsers to cache those libraries between builds.
-  externals: {
+  /*externals: {
       "react": "React",
       "react-dom": "ReactDOM"
-  },
+  },*/
 
   devServer: {
-      contentBase: '/workdir',
+      contentBase: '/workdir/dist',
       compress: true,
       port: 9000,
       host: "0.0.0.0"
