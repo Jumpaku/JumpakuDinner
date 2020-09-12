@@ -1,9 +1,8 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import { App } from "./app/App";
+import "destyle.css";
+import "./styles/style.css";
 
-import { Hello } from "./components/Hello";
 
-ReactDOM.render(
-    <Hello compiler="TypeScript" framework="React" builer="webpack" />,
-    document.getElementById("example")
-);
+ReactDOM.render(<App/>, document.getElementById("example"));
