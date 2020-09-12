@@ -6,6 +6,6 @@ services:
     working_dir: '/workdir/'
     command: ["sleep", "infinity"]
     volumes: 
-      - './../:/workdir/'
+      - './../:/workdir/:delegated'
     ports:
       - '9000:9000'

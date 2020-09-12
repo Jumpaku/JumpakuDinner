@@ -15,6 +15,23 @@ module.exports = {
       {
         test: /\.tsx?$/,
         use: 'ts-loader'
+      },
+      {
+        test: /\.(png|svg|jpg|gif)$/,
+        use: [
+          {
+            loader: 'file-loader',
+            options: {
+              name: '[name].[ext]',
+              outputPath : 'images/',
+              publicPath : (path)=> './images/' + path
+            }
+          } 
+        ],
+      },
+      {
+        test: /\.css/,
+        use: ["style-loader", "css-loader"],
       }
     ]
   },
