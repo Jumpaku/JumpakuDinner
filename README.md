@@ -6,7 +6,7 @@ https://dinner.jumpaku.net
 
 | environment | default         | required | description |
 |-------------|-----------------|----------|-------------|
-|`SERVER_NAME`|                 | no       | value of ServerName of httpd |
+|`SERVER_NAME`| `localhost`     | no       | value of ServerName of httpd |
 
 ## Example
 
