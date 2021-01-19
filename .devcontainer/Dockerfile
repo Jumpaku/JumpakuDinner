@@ -2,17 +2,9 @@ FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-WORKDIR /workdir
+RUN apt update -y && apt install -y npm git curl
+RUN npm install -g npm@6.14.10 n@7.0.0 
+RUN n 15.5.0 
+RUN npm install -g nodemon
 
-RUN apt update -y && apt install -y nodejs npm git curl\
-    && npm install -g npm-check-updates
-
-RUN npm init -y \
-    && npm install --save-dev webpack webpack-cli\
-    && npm install --save-dev react react-dom\
-    && npm install --save-dev @types/react @types/react-dom\
-    && npm install --save-dev typescript ts-loader source-map-loader\
-    && npm install --save-dev webpack-dev-server\
-    && npx tsc --init
-
-
+WORKDIR /project_root

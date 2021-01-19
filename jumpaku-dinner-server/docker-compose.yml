@@ -1,20 +1,16 @@
 version: "3"
 
 services:
-  jumpaku-dinner-dev:
-    build: "./"
-    working_dir: "/project_root/"
-    command: ["sleep", "infinity"]
-    volumes:
-      - "./../:/project_root/:delegated"
-    ports:
-      - "9000:9000"
-      - "3000:3000"
-  test-db:
+  postgres:
     image: "postgres:13"
     environment:
-      POSTGRES_USER: postgres_user
       POSTGRES_PASSWORD: postgres_password
       POSTGRES_DB: postgres_database
+      POSTGRES_USER: postgres_user
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - /custom/mount:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
   # docker-compose up postgres
   # docker-compose exec postgres psql --username='postgres_user' --dbname='postgres_database' --password

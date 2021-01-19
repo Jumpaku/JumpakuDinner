@@ -1,14 +1,20 @@
 {
-    "name": "jumpaku-dinner",
-    "dockerComposeFile": "./docker-compose.yml",
-    "service": "jumpaku-dinner",
-    "workspaceFolder": "/workdir/",
-    "extensions": [
-        "streetsidesoftware.code-spell-checker",
-        "donjayamanne.githistory"
-    ],
-    "settings": {
-        "editor.formatOnSave": false,
-        "editor.wordWrap": "on"
+  "name": "jumpaku-dinner-dev",
+  "dockerComposeFile": "./docker-compose.yml",
+  "service": "jumpaku-dinner-dev",
+  "workspaceFolder": "/project_root/",
+  "extensions": [
+    "donjayamanne.githistory",
+    "streetsidesoftware.code-spell-checker",
+    "esbenp.prettier-vscode",
+    "thebearingedge.vscode-sql-lit"
+  ],
+  "settings": {
+    "editor.wordWrap": "on",
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": true
     }
+  }
 }
