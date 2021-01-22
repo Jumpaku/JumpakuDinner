@@ -13,13 +13,13 @@ interface IResult<V, E> {
   isFailure(): this is Failure<V, E>;
   map<U>(f: (value: V) => U): Result<U, E>;
   flatMap<U, F>(f: (value: V) => Result<U, F>): Result<U, E | F>;
-  recover(f: (error: [E, ...E[]]) => V): Result<V, E>;
-  flatRecover<F>(f: (error: [E, ...E[]]) => Result<V, F>): Result<V, E | F>;
-  mapErrors<F>(f: (error: [E, ...E[]]) => F): Result<V, F>;
+  recover(f: (errors: [E, ...E[]]) => V): Result<V, E>;
+  flatRecover<F>(f: (errors: [E, ...E[]]) => Result<V, F>): Result<V, E | F>;
+  mapErrors<F>(f: (errors: [E, ...E[]]) => F): Result<V, F>;
   onSuccess(f: (value: V) => void): Result<V, E>;
-  onFailure(f: (error: [E, ...E[]]) => void): Result<V, E>;
+  onFailure(f: (errors: [E, ...E[]]) => void): Result<V, E>;
   orDefault(value: V): V;
-  orRecover(f: (error: [E, ...E[]]) => V): V;
+  orRecover(f: (errors: [E, ...E[]]) => V): V;
   orThrow<E>(f?: () => E): V;
   orNull(): V | null;
   orUndefined(): V | undefined;
@@ -32,7 +32,7 @@ export class Success<V, E> implements IResult<V, E> {
   orDefault(value: V): V {
     return this.value;
   }
-  orRecover(f: (errore: [E, ...E[]]) => V): V {
+  orRecover(f: (errors: [E, ...E[]]) => V): V {
     return this.value;
   }
   orThrow<E>(f?: () => E): V {
@@ -118,13 +118,13 @@ export class Failure<V, E> implements IResult<V, E> {
       ? result
       : failure<E | F>(...this.errorHistory, ...result.errorHistory);
   }
-  mapErrors<F>(f: (error: [E, ...E[]]) => F): Result<V, F> {
+  mapErrors<F>(f: (errors: [E, ...E[]]) => F): Result<V, F> {
     return new Failure<V, F>(f(this.errorHistory));
   }
   onSuccess(f: (value: V) => void): Result<V, E> {
     return this;
   }
-  onFailure(f: (error: [E, ...E[]]) => void): Result<V, E> {
+  onFailure(f: (errors: [E, ...E[]]) => void): Result<V, E> {
     f(this.errorHistory);
     return this;
   }

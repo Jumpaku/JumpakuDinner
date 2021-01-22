@@ -2,11 +2,13 @@ import { BaseError } from "make-error-cause";
 
 export type AppErrorType =
   | "AuthenticationFailed"
-  | "Unauthorized"
-  | "InvalidRequest"
+  | "ForbiddenAccess"
+  | "ForbiddenOperation"
+  | "InvalidParams"
   | "InvalidState"
   | "ServerError"
   | "DatabaseError"
+  | "TargetNotFound"
   | "UnexpectedError";
 
 export class AppError<D> extends BaseError {

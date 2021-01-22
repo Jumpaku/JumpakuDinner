@@ -21,6 +21,7 @@ export function validateLoginId(
     ],
   ]).validate(loginId);
 }
+
 export function validatePassword(
   password: unknown
 ): Result<string, ValidationError> {

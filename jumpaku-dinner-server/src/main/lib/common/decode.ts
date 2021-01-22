@@ -6,6 +6,7 @@ export function decode<T>(
   decoder: typing.Decoder<unknown, T>
 ): Result<T, Error> {
   const result = decoder.decode(value);
+
   return result._tag === "Right"
     ? success(result.right)
     : failure(

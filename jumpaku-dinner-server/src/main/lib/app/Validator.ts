@@ -7,6 +7,7 @@ export class ValidationError extends BaseError {
     super(messages.join(","));
   }
 }
+
 export class Validator {
   constructor(readonly validators: [(value: string) => boolean, string][]) {}
   validate(value: unknown): Result<string, ValidationError> {
