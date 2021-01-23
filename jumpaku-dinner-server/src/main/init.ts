@@ -9,9 +9,8 @@ export const initialize: (
   const catchError = (e: unknown) =>
     failure(new Error(`Database initialization failed: ${JSON.stringify(e)}`));
   return new Promise<Result<void, Error>>((resolve, reject) => {
-    const initialization = Promise.all([
-      new Accounts(db.configure(config)).createTable(),
-    ])
+    const database = db.configure(config);
+    const initialization = Promise.all([new Accounts(database).createTable()])
       .then(() => success(undefined))
       .catch((e) => catchError(e));
     resolve(initialization);

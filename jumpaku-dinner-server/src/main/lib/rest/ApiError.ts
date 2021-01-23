@@ -5,18 +5,40 @@ import { Status } from "./status";
 
 export type ApiErrorType = AppErrorType | "InvalidAuthHeader";
 
-export class ApiError<D> extends BaseError {
-  static by<D>(cause: D): ApiError<D>;
-  static by<D>(cause: D, type: ApiErrorType): ApiError<D>;
-  static by<D>(cause: D, type: ApiErrorType, message: string): ApiError<D>;
-  static by<D>(cause: D, type?: ApiErrorType, message?: string): ApiError<D> {
-    return new ApiError<D>(
-      type ?? (cause instanceof AppError ? cause.type : "UnexpectedError"),
-      message ??
-        (cause instanceof Error ? cause.message : "Error cannot be recognized"),
-      cause
+export class ApiError extends BaseError {
+  static by(
+    cause: unknown,
+    type?: ApiErrorType,
+    message?: string,
+    detail?: unknown
+  ): ApiError {
+    if (cause instanceof AppError)
+      return new ApiError(
+        type ?? cause.type,
+        message ?? cause.message,
+        detail ?? cause.detail,
+        cause
+      );
+    if (cause instanceof Error)
+      return new ApiError(
+        type ?? "UnexpectedError",
+        message ?? cause.message,
+        detail ?? cause,
+        cause
+      );
+    return new ApiError(
+      type ?? "UnexpectedError",
+      message ?? "Error cannot be recognized",
+      detail ?? cause
     );
   }
+  static wrap(cause: AppError): ApiError {
+    return new ApiError(cause.type, cause.message, cause.detail, cause);
+  }
+  static of(type: ApiErrorType, message: string, detail?: unknown): ApiError {
+    return new ApiError(type, message, detail);
+  }
+
   static statusOf(type: ApiErrorType): typeof Status[keyof typeof Status] {
     switch (type) {
       case "AuthenticationFailed":
@@ -36,12 +58,13 @@ export class ApiError<D> extends BaseError {
         return Status.InternalServerError;
     }
   }
-  constructor(
+  private constructor(
     readonly type: ApiErrorType,
     message: string,
-    readonly detail?: D
+    readonly detail?: unknown,
+    cause?: Error
   ) {
-    super(message, detail instanceof Error ? detail : undefined);
+    super(message, cause);
   }
 
   response(): ApiResponse<unknown> {
@@ -52,7 +75,13 @@ export class ApiError<D> extends BaseError {
         type: this.type,
         message: this.message,
       } as const,
-      this.detail == null ? { details: JSON.stringify(this.detail) } : {}
+      this.cause instanceof AppError
+        ? { details: `${this.cause.detail}` }
+        : this.cause != null
+        ? { details: `${this.cause}` }
+        : this.detail != null
+        ? { details: `${this.detail}` }
+        : {}
     );
     return { status, body };
   }

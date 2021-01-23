@@ -1,4 +1,3 @@
-import * as typing from "io-ts";
 import { Database } from "../../database/db";
 import { TableAccess } from "../../database/TableAccess";
 import { sql } from "../../database/sql";
@@ -14,16 +13,18 @@ import {
 } from "./validation";
 import pg from "pg-promise";
 import * as JWT from "../jwt";
-
-export const Account = typing.type({
-  id: typing.number,
-  loginId: typing.string,
-  passwordHash: typing.string,
-  displayName: typing.string,
-  status: typing.union([typing.literal("OPEN"), typing.literal("CLOSED")]),
-});
-
-export type Account = typing.TypeOf<typeof Account>;
+import {
+  Account,
+  CreateAccountParams,
+  CreateAccountResult,
+  CloseAccountParams,
+  CloseAccountResult,
+  SignTokenParams,
+  SignTokenResult,
+  VerifyTokenParams,
+  VerifyTokenResult,
+  IAccounts,
+} from "./IAccounts";
 
 const AccountColumns = {
   id: "id",
@@ -33,30 +34,9 @@ const AccountColumns = {
   status: "status",
 } as const;
 
-export const CreateAccountParams = typing.type({
-  loginId: typing.string,
-  password: typing.string,
-  displayName: typing.string,
-});
-export type CreateAccountParams = typing.TypeOf<typeof CreateAccountParams>;
-export type CreateAccountResult = { loginId: string; displayName: string };
-
-export const CloseAccountParams = JWT.JwtElement;
-export type CloseAccountParams = typing.TypeOf<typeof CloseAccountParams>;
-export type CloseAccountResult = {};
-
-export const SignTokenParams = typing.type({
-  loginId: typing.string,
-  password: typing.string,
-});
-export type SignTokenParams = typing.TypeOf<typeof SignTokenParams>;
-export type SignTokenResult = JWT.JwtElement;
-
-export const VerifyTokenParams = JWT.JwtElement;
-export type VerifyTokenParams = typing.TypeOf<typeof VerifyTokenParams>;
-export type VerifyTokenResult = {};
-
-export class Accounts extends TableAccess<Account, typeof AccountColumns> {
+export class Accounts
+  extends TableAccess<Account, typeof AccountColumns>
+  implements IAccounts {
   constructor(database: Database) {
     super(
       database,
@@ -80,9 +60,7 @@ export class Accounts extends TableAccess<Account, typeof AccountColumns> {
     loginId,
     password,
     displayName,
-  }: CreateAccountParams): Promise<
-    Result<CreateAccountResult, AppError<unknown>>
-  > {
+  }: CreateAccountParams): Promise<Result<CreateAccountResult, AppError>> {
     const { value: loginIdValue, error: loginIdError } = validateLoginId(
       loginId
     );
@@ -113,12 +91,13 @@ export class Accounts extends TableAccess<Account, typeof AccountColumns> {
 
     const appErrorLoginIdAlreadyExists = (
       e: unknown
-    ): Result<never, AppError<unknown>> => {
+    ): Result<never, AppError> => {
       if (e instanceof PostgresError)
         if (e.code === IntegrityConstraintViolation.unique_violation)
           return failure(
             AppError.by(e, "InvalidState", "loginId is not available")
           );
+
       throw e;
     };
     return this.database
@@ -132,9 +111,7 @@ export class Accounts extends TableAccess<Account, typeof AccountColumns> {
 
   async close({
     jwt,
-  }: CloseAccountParams): Promise<
-    Result<CloseAccountResult, AppError<unknown>>
-  > {
+  }: CloseAccountParams): Promise<Result<CloseAccountResult, AppError>> {
     const verified = JWT.verify(jwt);
     if (verified.isFailure())
       return failure(
@@ -168,7 +145,7 @@ export class Accounts extends TableAccess<Account, typeof AccountColumns> {
   async signToken({
     loginId,
     password,
-  }: SignTokenParams): Promise<Result<SignTokenResult, AppError<unknown>>> {
+  }: SignTokenParams): Promise<Result<SignTokenResult, AppError>> {
     const selectAccount = sql`
       SELECT ${this.columns.passwordHash}, ${this.columns.status} FROM ${this.name} 
       WHERE ${this.columns.loginId}=$1;
@@ -201,7 +178,7 @@ export class Accounts extends TableAccess<Account, typeof AccountColumns> {
   }
   async verifyToken({
     jwt,
-  }: VerifyTokenParams): Promise<Result<VerifyTokenResult, AppError<unknown>>> {
+  }: VerifyTokenParams): Promise<Result<VerifyTokenResult, AppError>> {
     const verified = JWT.verify(jwt);
     if (verified.isFailure())
       return failure(
@@ -230,15 +207,17 @@ export class Accounts extends TableAccess<Account, typeof AccountColumns> {
   }
 }
 
-function appErrorOnDatabase(e: unknown): Result<never, AppError<Error>> {
+function appErrorOnDatabase(e: unknown): Result<never, AppError> {
   if (
     e instanceof DatabaseError ||
+    e instanceof PostgresError ||
     e instanceof pg.errors.ParameterizedQueryError ||
     e instanceof pg.errors.PreparedStatementError ||
     e instanceof pg.errors.QueryFileError ||
     e instanceof pg.errors.QueryResultError
-  ) {
+  )
     return failure(AppError.by(e, "DatabaseError"));
-  }
+  console.log("TEST", e, (e as any).constructor);
+
   throw e;
 }

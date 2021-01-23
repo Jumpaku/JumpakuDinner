@@ -11,12 +11,12 @@ export type AppErrorType =
   | "TargetNotFound"
   | "UnexpectedError";
 
-export class AppError<D> extends BaseError {
-  static by<D>(cause: D): AppError<D>;
-  static by<D>(cause: D, type: AppErrorType): AppError<D>;
-  static by<D>(cause: D, type: AppErrorType, message: string): AppError<D>;
-  static by<D>(cause: D, type?: AppErrorType, message?: string): AppError<D> {
-    return new AppError<D>(
+export class AppError extends BaseError {
+  static by(cause: unknown): AppError;
+  static by(cause: unknown, type: AppErrorType): AppError;
+  static by(cause: unknown, type: AppErrorType, message: string): AppError;
+  static by(cause: unknown, type?: AppErrorType, message?: string): AppError {
+    return new AppError(
       type ?? "UnexpectedError",
       message ??
         (cause instanceof Error ? cause.message : "Error cannot be recognized"),
@@ -26,7 +26,7 @@ export class AppError<D> extends BaseError {
   constructor(
     readonly type: AppErrorType,
     message: string,
-    readonly detail?: D
+    readonly detail?: unknown
   ) {
     super(message, detail instanceof Error ? detail : undefined);
   }

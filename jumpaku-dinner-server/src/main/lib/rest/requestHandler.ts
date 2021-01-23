@@ -3,18 +3,6 @@ import { getLogger } from "../../logger";
 import { Status } from "./status";
 import { ApiErrorType } from "./ApiError";
 
-function logRequestInfo(req: Request, res: Response): void {
-  getLogger().info({
-    req: {
-      method: req.method,
-      url: req.originalUrl,
-    },
-    res: {
-      status: res.statusCode,
-    },
-  });
-}
-
 export type FailureResponse = {
   tag: "Failure";
 } & {
@@ -39,6 +27,18 @@ export type ApiRequest = Partial<{
 export type ApiRequestHandler<R> = (
   request: ApiRequest
 ) => Promise<ApiResponse<R>>;
+
+function logRequestInfo(req: Request, res: Response): void {
+  getLogger().info({
+    req: {
+      method: req.method,
+      url: req.url,
+    },
+    res: {
+      status: res.statusCode,
+    },
+  });
+}
 
 export function requestHandler<R>(
   handler: ApiRequestHandler<R>

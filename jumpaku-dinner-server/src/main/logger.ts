@@ -1,4 +1,4 @@
-import * as log4js from "log4js";
+import log4js from "log4js";
 
 let logger: log4js.Logger | undefined = undefined;
 

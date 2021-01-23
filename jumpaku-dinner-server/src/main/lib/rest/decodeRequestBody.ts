@@ -5,7 +5,7 @@ import { ApiError } from "./ApiError";
 export function decodeRequestBody<D>(
   data: unknown,
   decoder: typing.Decoder<unknown, D>
-): Result<D, ApiError<unknown>> {
+): Result<D, ApiError> {
   const result = decoder.decode(data);
   return result._tag === "Right"
     ? success(result.right)
