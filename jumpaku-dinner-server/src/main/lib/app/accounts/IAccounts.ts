@@ -25,12 +25,12 @@ export const CloseAccountParams = JWT.JwtElement;
 export type CloseAccountParams = typing.TypeOf<typeof CloseAccountParams>;
 export type CloseAccountResult = {};
 
-export const SignTokenParams = typing.type({
+export const IssueTokenParams = typing.type({
   loginId: typing.string,
   password: typing.string,
 });
-export type SignTokenParams = typing.TypeOf<typeof SignTokenParams>;
-export type SignTokenResult = JWT.JwtElement;
+export type IssueTokenParams = typing.TypeOf<typeof IssueTokenParams>;
+export type IssueTokenResult = JWT.JwtElement;
 
 export const VerifyTokenParams = JWT.JwtElement;
 export type VerifyTokenParams = typing.TypeOf<typeof VerifyTokenParams>;
@@ -45,10 +45,10 @@ export interface IAccounts {
   close({
     jwt,
   }: CloseAccountParams): Promise<Result<CloseAccountResult, AppError>>;
-  signToken({
+  issueToken({
     loginId,
     password,
-  }: SignTokenParams): Promise<Result<SignTokenResult, AppError>>;
+  }: IssueTokenParams): Promise<Result<IssueTokenResult, AppError>>;
   verifyToken({
     jwt,
   }: VerifyTokenParams): Promise<Result<VerifyTokenResult, AppError>>;

@@ -8,7 +8,7 @@ export type FailureResponse = {
 } & {
   type: ApiErrorType;
   message: string;
-  detail?: string;
+  detail?: unknown;
 };
 
 export type ApiResponse<R> = {

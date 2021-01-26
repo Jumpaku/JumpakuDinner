@@ -76,11 +76,11 @@ export class ApiError extends BaseError {
         message: this.message,
       } as const,
       this.cause instanceof AppError
-        ? { details: `${this.cause.detail}` }
+        ? { detail: this.cause.detail }
         : this.cause != null
-        ? { details: `${this.cause}` }
+        ? { detail: this.cause }
         : this.detail != null
-        ? { details: `${this.detail}` }
+        ? { detail: this.detail }
         : {}
     );
     return { status, body };

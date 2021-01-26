@@ -23,6 +23,8 @@ interface IResult<V, E> {
   orThrow<E>(f?: () => E): V;
   orNull(): V | null;
   orUndefined(): V | undefined;
+  and<U, F>(other: Result<U, F>): Result<V | U, E | F>;
+  or<U, F>(other: Result<U, F>): Result<V | U, E | F>;
 }
 
 export class Success<V, E> implements IResult<V, E> {
@@ -70,6 +72,12 @@ export class Success<V, E> implements IResult<V, E> {
     return this;
   }
   onFailure(f: (errors: [E, ...E[]]) => void): Result<V, E> {
+    return this;
+  }
+  and<U, F>(other: Result<U, F>): Result<V | U, E | F> {
+    return other;
+  }
+  or<U, F>(other: Result<U, F>): Result<V | U, E | F> {
     return this;
   }
 }
@@ -127,6 +135,12 @@ export class Failure<V, E> implements IResult<V, E> {
   onFailure(f: (errors: [E, ...E[]]) => void): Result<V, E> {
     f(this.errorHistory);
     return this;
+  }
+  and<U, F>(other: Result<U, F>): Result<V | U, E | F> {
+    return this;
+  }
+  or<U, F>(other: Result<U, F>): Result<V | U, E | F> {
+    return other;
   }
 }
 

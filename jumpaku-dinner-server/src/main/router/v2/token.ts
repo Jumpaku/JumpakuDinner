@@ -1,9 +1,10 @@
 import express from "express";
 import { AppDatabasePool } from "../../AppDatabasePool";
+import { AppModel } from "../../AppModel";
 import { Accounts } from "../../lib/app/accounts/Accounts";
 import {
-  SignTokenParams,
-  SignTokenResult,
+  IssueTokenParams,
+  IssueTokenResult,
   VerifyTokenParams,
   VerifyTokenResult,
 } from "../../lib/app/accounts/IAccounts";
@@ -19,12 +20,10 @@ import { Status } from "../../lib/rest/status";
 
 const sign = async ({
   body,
-}: ApiRequest): Promise<ApiResponse<SignTokenResult>> => {
-  const json = decodeRequestBody(body, SignTokenParams.asDecoder());
+}: ApiRequest): Promise<ApiResponse<IssueTokenResult>> => {
+  const json = decodeRequestBody(body, IssueTokenParams.asDecoder());
   if (json.isFailure()) return json.error.response();
-  const result = await new Accounts(AppDatabasePool.get()).signToken(
-    json.value
-  );
+  const result = await AppModel.accounts.issueToken(json.value);
   if (result.isFailure()) return ApiError.wrap(result.error).response();
   return {
     status: Status.Ok,
@@ -46,9 +45,7 @@ const verify = async ({
     VerifyTokenParams.asDecoder()
   );
   if (json.isFailure()) return json.error.response();
-  const result = await new Accounts(AppDatabasePool.get()).verifyToken(
-    json.value
-  );
+  const result = await AppModel.accounts.verifyToken(json.value);
   if (result.isFailure()) return ApiError.wrap(result.error).response();
   return {
     status: Status.Ok,

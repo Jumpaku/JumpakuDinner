@@ -13,55 +13,8 @@ interface IOption<T> {
   filterIfNullable(): Option<NonNullable<T>>;
   ifPresent(f: (value: T) => void): Option<T>;
   ifAbsent(f: () => void): Option<T>;
-}
-
-class None<T = never> implements IOption<T> {
-  static readonly instance = new None();
-  private constructor() {}
-  isSome(): this is Some<T> {
-    return false;
-  }
-  isNone(): this is None<T> {
-    return true;
-  }
-  flatMap<U>(f: (value: T) => Option<U>): Option<U> {
-    return None.instance;
-  }
-  map<U>(f: (value: T) => U): Option<U> {
-    return None.instance;
-  }
-  orDefault(value: T): T {
-    return value;
-  }
-  orBuild(f: () => T): T {
-    return f();
-  }
-  orThrow<E>(f?: () => E): T {
-    throw f != null ? f() : new Error("Option is None.");
-  }
-  orNull(): T | null {
-    return null;
-  }
-  orUndefined(): T | undefined {
-    return undefined;
-  }
-  asArray(): [] | [T] {
-    return [];
-  }
-  filter(f: (value: T) => boolean): Option<T> {
-    return this;
-  }
-  filterIfNullable(): Option<NonNullable<T>> {
-    return None.instance;
-  }
-
-  ifPresent(f: (value: T) => void): Option<T> {
-    return this;
-  }
-  ifAbsent(f: () => void): Option<T> {
-    f();
-    return this;
-  }
+  and<U>(other: Option<U>): Option<T | U>;
+  or<U>(other: Option<U>): Option<T | U>;
 }
 
 class Some<T> implements IOption<T> {
@@ -107,6 +60,66 @@ class Some<T> implements IOption<T> {
     return this;
   }
   ifAbsent(f: () => void): Option<T> {
+    return this;
+  }
+  and<U>(other: Option<U>): Option<T | U> {
+    return this;
+  }
+  or<U>(other: Option<U>): Option<T | U> {
+    return other;
+  }
+}
+
+class None<T = never> implements IOption<T> {
+  static readonly instance = new None();
+  private constructor() {}
+  isSome(): this is Some<T> {
+    return false;
+  }
+  isNone(): this is None<T> {
+    return true;
+  }
+  flatMap<U>(f: (value: T) => Option<U>): Option<U> {
+    return None.instance;
+  }
+  map<U>(f: (value: T) => U): Option<U> {
+    return None.instance;
+  }
+  orDefault(value: T): T {
+    return value;
+  }
+  orBuild(f: () => T): T {
+    return f();
+  }
+  orThrow<E>(f?: () => E): T {
+    throw f != null ? f() : new Error("Option is None.");
+  }
+  orNull(): T | null {
+    return null;
+  }
+  orUndefined(): T | undefined {
+    return undefined;
+  }
+  asArray(): [] | [T] {
+    return [];
+  }
+  filter(f: (value: T) => boolean): Option<T> {
+    return this;
+  }
+  filterIfNullable(): Option<NonNullable<T>> {
+    return None.instance;
+  }
+  ifPresent(f: (value: T) => void): Option<T> {
+    return this;
+  }
+  ifAbsent(f: () => void): Option<T> {
+    f();
+    return this;
+  }
+  and<U>(other: Option<U>): Option<T | U> {
+    return other;
+  }
+  or<U>(other: Option<U>): Option<T | U> {
     return this;
   }
 }

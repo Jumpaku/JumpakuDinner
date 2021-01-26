@@ -13,21 +13,28 @@ export type AppErrorType =
 
 export class AppError extends BaseError {
   static by(cause: unknown): AppError;
-  static by(cause: unknown, type: AppErrorType): AppError;
-  static by(cause: unknown, type: AppErrorType, message: string): AppError;
+  static by(cause: unknown, type?: AppErrorType, message?: string): AppError;
   static by(cause: unknown, type?: AppErrorType, message?: string): AppError {
     return new AppError(
       type ?? "UnexpectedError",
       message ??
         (cause instanceof Error ? cause.message : "Error cannot be recognized"),
-      cause
+      cause,
+      cause instanceof Error ? cause : undefined
     );
   }
   constructor(
     readonly type: AppErrorType,
     message: string,
-    readonly detail?: unknown
+    readonly detail?: unknown,
+    cause?: unknown
   ) {
-    super(message, detail instanceof Error ? detail : undefined);
+    super(message, cause instanceof Error ? cause : undefined);
+  }
+
+  toString() {
+    return `${this.name} (${this.type}): ${this.message}${
+      this.detail ? ` -- ${this.detail}` : ""
+    }`;
   }
 }

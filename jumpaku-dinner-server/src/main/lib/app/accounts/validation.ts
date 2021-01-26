@@ -31,8 +31,8 @@ export function validatePassword(
       "password must contain only ASCII characters",
     ],
     [
-      (password) => !validator.matches(password, /^.*[\p{Cc}\p{Cf}\s]+.*$/su),
-      "password must not contain control characters or spaces",
+      (password) => !validator.matches(password, /^.*[\p{Cc}\p{Cf}]+.*$/su),
+      "password must not contain control characters",
     ],
     [
       (password) => validator.isLength(password, { min: 8, max: 128 }),
@@ -51,8 +51,8 @@ export function validateDisplayName(
     ],
     [
       (displayName) =>
-        !validator.matches(displayName, /^.*[\p{Cc}\p{Cf}\s]+.*$/su),
-      "displayName must not contain control character or spaces",
+        !validator.matches(displayName, /^.*[\p{Cc}\p{Cf}]+.*$/su),
+      "displayName must not contain control character",
     ],
     [
       (displayName) => validator.isLength(displayName, { min: 1, max: 50 }),

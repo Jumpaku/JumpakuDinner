@@ -29,24 +29,3 @@ export function connect(
     }
   );
 }
-
-export class DatabaseAccess {
-  constructor(protected readonly database: Database) {}
-
-  queryNone(stmt: QueryStatement): Promise<Result<void, DatabaseError>> {
-    return this.database
-      .none(stmt)
-      .then(() => success(undefined))
-      .catch(databaseErrorOnQuery);
-  }
-
-  queryManyDecoded<Row>(
-    stmt: QueryStatement,
-    decoder: (row: any) => Result<Row, Error>
-  ): Promise<Result<Row[], DatabaseError>> {
-    return this.database
-      .map(stmt, undefined, (row) => decoder(row).orThrow())
-      .then((rows) => success(rows))
-      .catch(databaseErrorOnQuery);
-  }
-}

@@ -13,7 +13,7 @@
     "compile": "tsc",
     "bundle": "rollup ./dist/main/index.js --file ./dist/index.js --format es",
     "minimize": "terser --compress --mangle --output ./dist/index.min.js ./dist/index.js",
-    "test": "jest --config=./jest.config.js",
+    "test": "jest --runInBand --detectOpenHandles --config=./jest.config.js",
     "lint": "eslint ./src/ --ext .ts --fix"
   },
   "author": "Jumpaku",
@@ -22,7 +22,7 @@
     "@types/bcrypt": "^3.0.0",
     "@types/express": "^4.17.9",
     "@types/express-jwt": "^6.0.0",
-    "@types/jest": "^26.0.19",
+    "@types/jest": "^26.0.20",
     "@types/jsonwebtoken": "^8.5.0",
     "@types/log4js": "^2.3.5",
     "@types/node": "^14.14.16",

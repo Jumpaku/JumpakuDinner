@@ -1,5 +1,4 @@
 import { Database } from "../../database/db";
-import { TableAccess } from "../../database/TableAccess";
 import { sql } from "../../database/sql";
 import { failure, Result, success } from "../../common/result";
 import * as bcrypt from "bcrypt";
@@ -19,42 +18,46 @@ import {
   CreateAccountResult,
   CloseAccountParams,
   CloseAccountResult,
-  SignTokenParams,
-  SignTokenResult,
+  IssueTokenParams,
+  IssueTokenResult,
   VerifyTokenParams,
   VerifyTokenResult,
   IAccounts,
 } from "./IAccounts";
 
-const AccountColumns = {
-  id: "id",
-  loginId: "login_id",
-  passwordHash: "password_hash",
-  displayName: "display_name",
-  status: "status",
-} as const;
-
-export class Accounts
-  extends TableAccess<Account, typeof AccountColumns>
-  implements IAccounts {
-  constructor(database: Database) {
-    super(
-      database,
-      "accounts",
-      AccountColumns,
-      sql`
+export class Accounts implements IAccounts {
+  static readonly tableName = "accounts";
+  static readonly columns = {
+    id: "id",
+    loginId: "login_id",
+    passwordHash: "password_hash",
+    displayName: "display_name",
+    status: "status",
+  } as const;
+  static initialize(database: Database): Promise<Result<void, AppError>> {
+    return database
+      .none(
+        sql`
         CREATE TABLE IF NOT EXISTS ${"accounts"} (
-          ${AccountColumns.id} SERIAL,
-          ${AccountColumns.loginId} TEXT UNIQUE NOT NULL,
-          ${AccountColumns.passwordHash} TEXT NOT NULL,
-          ${AccountColumns.displayName} TEXT NOT NULL,
-          ${AccountColumns.status} TEXT NOT NULL CHECK (
-            ${AccountColumns.status}='OPEN' OR ${
-        AccountColumns.status
-      }='CLOSED');
-      `
-    );
+          ${Accounts.columns.id} SERIAL,
+          ${Accounts.columns.loginId} TEXT UNIQUE NOT NULL,
+          ${Accounts.columns.passwordHash} TEXT NOT NULL,
+          ${Accounts.columns.displayName} TEXT NOT NULL,
+          ${Accounts.columns.status} TEXT NOT NULL CHECK (
+          ${Accounts.columns.status}='OPEN' OR ${
+          this.columns.status
+        }='CLOSED'));`
+      )
+      .then(() => success(undefined))
+      .catch((e) =>
+        appErrorOnDatabase(
+          e,
+          `Failed database initialization on create table '${this.name}'`
+        )
+      );
   }
+
+  constructor(readonly database: Database, readonly jwt: JWT.Jwt) {}
 
   async create({
     loginId,
@@ -84,7 +87,7 @@ export class Accounts
     }
     const passwordHash = await bcrypt.hash(passwordValue, 10);
     const insertUser = sql`
-      INSERT INTO ${this.name} (${this.columns.loginId},${this.columns.passwordHash}, ${this.columns.displayName}, ${this.columns.status}) 
+      INSERT INTO ${Accounts.tableName} (${Accounts.columns.loginId},${Accounts.columns.passwordHash}, ${Accounts.columns.displayName}, ${Accounts.columns.status}) 
       VALUES ($1, $2, $3, $4)
       RETURNING *;
     `.with(loginIdValue, passwordHash, displayNameValue, "OPEN");
@@ -112,7 +115,7 @@ export class Accounts
   async close({
     jwt,
   }: CloseAccountParams): Promise<Result<CloseAccountResult, AppError>> {
-    const verified = JWT.verify(jwt);
+    const verified = this.jwt.verify(jwt);
     if (verified.isFailure())
       return failure(
         AppError.by(verified.error, "AuthenticationFailed", "invalid JWT token")
@@ -121,7 +124,7 @@ export class Accounts
     return this.database
       .tx(async (task) => {
         const selectStatus = sql`
-          SELECT ${this.columns.status} FROM ${this.name} WHERE ${this.columns.loginId}=$1
+          SELECT ${Accounts.columns.status} FROM ${Accounts.tableName} WHERE ${Accounts.columns.loginId}=$1
         `.with(loginId);
         const row = await task.oneOrNone<{ status: Account["status"] }>(
           selectStatus
@@ -135,20 +138,20 @@ export class Accounts
             new AppError("ForbiddenOperation", "Account already closed")
           );
         const updateUser = sql`
-          UPDATE ${this.name} SET ${this.columns.status}=$1 WHERE ${this.columns.loginId}=$2;
+          UPDATE ${Accounts.tableName} SET ${Accounts.columns.status}=$1 WHERE ${Accounts.columns.loginId}=$2;
         `.with("CLOSED", loginId);
         return task.none(updateUser).then(() => success({}));
       })
       .catch(appErrorOnDatabase);
   }
 
-  async signToken({
+  async issueToken({
     loginId,
     password,
-  }: SignTokenParams): Promise<Result<SignTokenResult, AppError>> {
+  }: IssueTokenParams): Promise<Result<IssueTokenResult, AppError>> {
     const selectAccount = sql`
-      SELECT ${this.columns.passwordHash}, ${this.columns.status} FROM ${this.name} 
-      WHERE ${this.columns.loginId}=$1;
+      SELECT ${Accounts.columns.passwordHash}, ${Accounts.columns.status} FROM ${Accounts.tableName} 
+      WHERE ${Accounts.columns.loginId}=$1;
     `.with(loginId);
     const promiseRow = this.database.oneOrNone<{
       password_hash: string;
@@ -172,14 +175,15 @@ export class Accounts
               "Wrong password for specified loginId"
             )
           );
-        return success({ jwt: JWT.sign(loginId) });
+        return success({ jwt: this.jwt.issue(loginId) });
       })
       .catch(appErrorOnDatabase);
   }
+
   async verifyToken({
     jwt,
   }: VerifyTokenParams): Promise<Result<VerifyTokenResult, AppError>> {
-    const verified = JWT.verify(jwt);
+    const verified = this.jwt.verify(jwt);
     if (verified.isFailure())
       return failure(
         AppError.by(verified.error, "ForbiddenAccess", "invalid JWT token")
@@ -188,7 +192,7 @@ export class Accounts
     return this.database
       .tx(async (task) => {
         const selectStatus = sql`
-          SELECT ${this.columns.status} FROM ${this.name} WHERE ${this.columns.loginId}=$1
+          SELECT ${Accounts.columns.status} FROM ${Accounts.tableName} WHERE ${Accounts.columns.loginId}=$1
         `.with(loginId);
         const row = await task.oneOrNone<{ status: Account["status"] }>(
           selectStatus
@@ -207,7 +211,10 @@ export class Accounts
   }
 }
 
-function appErrorOnDatabase(e: unknown): Result<never, AppError> {
+function appErrorOnDatabase(
+  e: unknown,
+  message?: string
+): Result<never, AppError> {
   if (
     e instanceof DatabaseError ||
     e instanceof PostgresError ||
@@ -216,8 +223,6 @@ function appErrorOnDatabase(e: unknown): Result<never, AppError> {
     e instanceof pg.errors.QueryFileError ||
     e instanceof pg.errors.QueryResultError
   )
-    return failure(AppError.by(e, "DatabaseError"));
-  console.log("TEST", e, (e as any).constructor);
-
+    return failure(AppError.by(e, "DatabaseError", message));
   throw e;
 }

@@ -4,7 +4,10 @@ import { BaseError } from "make-error-cause";
 export class ValidationError extends BaseError {
   name = "ValidationError";
   constructor(readonly value: string, readonly messages: string[]) {
-    super(messages.join(","));
+    super(`messages: [\n  ${messages.join(",\n  ")}\n]`);
+  }
+  toString() {
+    return `${this.name}: ${this.message}`;
   }
 }
 

@@ -10,6 +10,7 @@ const main = async () => {
     password: "postgres_password",
     database: "postgres_database",
   });
+
   let app = express();
   const port = 3000;
 

@@ -16,13 +16,14 @@ import {
   CreateAccountParams,
   CreateAccountResult,
 } from "../../lib/app/accounts/IAccounts";
+import { AppModel } from "../../AppModel";
 
 const signup = async ({
   body,
 }: ApiRequest): Promise<ApiResponse<CreateAccountResult>> => {
   const json = decodeRequestBody(body, CreateAccountParams.asDecoder());
   if (json.isFailure()) return json.error.response();
-  const creation = await new Accounts(AppDatabasePool.get()).create(json.value);
+  const creation = await AppModel.accounts.create(json.value);
   if (creation.isFailure()) return ApiError.wrap(creation.error).response();
   return {
     status: Status.Ok,
@@ -44,7 +45,7 @@ const close = async ({
     CloseAccountParams.asDecoder()
   );
   if (json.isFailure()) return json.error.response();
-  const closing = await new Accounts(AppDatabasePool.get()).close(json.value);
+  const closing = await AppModel.accounts.close(json.value);
   if (closing.isFailure()) return ApiError.wrap(closing.error).response();
   return {
     status: Status.Ok,
