@@ -1,6 +1,6 @@
 import { BaseError } from "make-error-cause";
 import { AppError, AppErrorType } from "../app/AppError";
-import { ApiResponse } from "./requestHandler";
+import { ApiResponse } from "./ApiHandler";
 import { Status } from "./status";
 
 export type ApiErrorType = AppErrorType | "InvalidAuthHeader";

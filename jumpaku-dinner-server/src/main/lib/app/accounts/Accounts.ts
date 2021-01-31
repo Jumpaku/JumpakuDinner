@@ -11,41 +11,46 @@ import {
   validatePassword,
 } from "./validation";
 import pg from "pg-promise";
-import * as JWT from "../jwt";
-import {
-  Account,
-  CreateAccountParams,
-  CreateAccountResult,
-  CloseAccountParams,
-  CloseAccountResult,
-  IssueTokenParams,
-  IssueTokenResult,
-  VerifyTokenParams,
-  VerifyTokenResult,
-  IAccounts,
-} from "./IAccounts";
+import * as JWT from "./jwt";
+import { IAccountsModel, IAccountsExecutor } from "./IAccounts";
 
-export class Accounts implements IAccounts {
+export type AccountRow = {
+  account_id: number;
+  login_id: string;
+  password_hash: string;
+  display_name: string;
+  status: "OPEN" | "CLOSED";
+};
+export type Account = {
+  accountId: number;
+  loginId: string;
+  passwordHash: string;
+  displayName: string;
+  status: "OPEN" | "CLOSED";
+};
+
+export const AccountColumns = {
+  accountId: "account_id",
+  loginId: "login_id",
+  passwordHash: "password_hash",
+  displayName: "display_name",
+  status: "status",
+} as const;
+
+export class Accounts implements IAccountsExecutor {
   static readonly tableName = "accounts";
-  static readonly columns = {
-    id: "id",
-    loginId: "login_id",
-    passwordHash: "password_hash",
-    displayName: "display_name",
-    status: "status",
-  } as const;
-  static initialize(database: Database): Promise<Result<void, AppError>> {
+  static init(database: Database): Promise<Result<void, AppError>> {
     return database
       .none(
         sql`
         CREATE TABLE IF NOT EXISTS ${"accounts"} (
-          ${Accounts.columns.id} SERIAL,
-          ${Accounts.columns.loginId} TEXT UNIQUE NOT NULL,
-          ${Accounts.columns.passwordHash} TEXT NOT NULL,
-          ${Accounts.columns.displayName} TEXT NOT NULL,
-          ${Accounts.columns.status} TEXT NOT NULL CHECK (
-          ${Accounts.columns.status}='OPEN' OR ${
-          this.columns.status
+          ${AccountColumns.accountId} SERIAL,
+          ${AccountColumns.loginId} TEXT UNIQUE NOT NULL,
+          ${AccountColumns.passwordHash} TEXT NOT NULL,
+          ${AccountColumns.displayName} TEXT NOT NULL,
+          ${AccountColumns.status} TEXT NOT NULL CHECK (
+          ${AccountColumns.status}='OPEN' OR ${
+          AccountColumns.status
         }='CLOSED'));`
       )
       .then(() => success(undefined))
@@ -56,162 +61,189 @@ export class Accounts implements IAccounts {
         )
       );
   }
-
   constructor(readonly database: Database, readonly jwt: JWT.Jwt) {}
+  exec<T>(
+    f: (model: IAccountsModel) => Promise<Result<T, AppError>>
+  ): Promise<Result<T, AppError>> {
+    return this.database
+      .tx(async (task) => {
+        const result = await f(new AccountsModel(task, this.jwt));
+        return result.isSuccess()
+          ? Promise.resolve(result)
+          : Promise.reject(result);
+      })
+      .catch((result: Result<T, AppError>) => result);
+  }
+}
 
-  async create({
-    loginId,
-    password,
-    displayName,
-  }: CreateAccountParams): Promise<Result<CreateAccountResult, AppError>> {
-    const { value: loginIdValue, error: loginIdError } = validateLoginId(
-      loginId
-    );
-    const { value: passwordValue, error: passwordError } = validatePassword(
-      password
-    );
-    const {
-      value: displayNameValue,
-      error: displayNameError,
-    } = validateDisplayName(displayName);
-    if (loginIdError ?? passwordError ?? displayNameError) {
+class AccountsModel implements IAccountsModel {
+  static executor(database: Database, jwt: JWT.Jwt): IAccountsExecutor {
+    return new (class implements IAccountsExecutor {
+      exec<T>(
+        f: (tasks: IAccountsModel) => Promise<Result<T, AppError>>
+      ): Promise<Result<T, AppError>> {
+        return database.tx((task) => f(new AccountsModel(task, jwt)));
+      }
+    })();
+  }
+  constructor(readonly task: pg.ITask<{}>, readonly jwt: JWT.Jwt) {}
+
+  private validate(param: {
+    loginId: string;
+    password: string;
+    displayName: string;
+  }): Result<
+    {
+      loginId: string;
+      password: string;
+      displayName: string;
+    },
+    AppError
+  > {
+    const loginId = validateLoginId(param.loginId);
+    const password = validatePassword(param.password);
+    const displayName = validateDisplayName(param.displayName);
+    if (loginId.isFailure() || password.isFailure() || displayName.isFailure())
       return failure(
         new AppError(
           "InvalidParams",
           "Request validation failed",
-          [loginIdError, passwordError, displayNameError].filter(
+          [loginId.error, password.error, displayName.error].filter(
             (it) => it != null
           )
         )
       );
-    }
-    const passwordHash = await bcrypt.hash(passwordValue, 10);
-    const insertUser = sql`
-      INSERT INTO ${Accounts.tableName} (${Accounts.columns.loginId},${Accounts.columns.passwordHash}, ${Accounts.columns.displayName}, ${Accounts.columns.status}) 
-      VALUES ($1, $2, $3, $4)
-      RETURNING *;
-    `.with(loginIdValue, passwordHash, displayNameValue, "OPEN");
-
-    const appErrorLoginIdAlreadyExists = (
-      e: unknown
-    ): Result<never, AppError> => {
-      if (e instanceof PostgresError)
-        if (e.code === IntegrityConstraintViolation.unique_violation)
-          return failure(
-            AppError.by(e, "InvalidState", "loginId is not available")
-          );
-
-      throw e;
-    };
-    return this.database
-      .one<{ login_id: string; display_name: string }>(insertUser)
-      .then((row) =>
-        success({ loginId: row["login_id"], displayName: row["display_name"] })
-      )
-      .catch(appErrorLoginIdAlreadyExists)
-      .catch(appErrorOnDatabase);
+    return success({
+      loginId: loginId.value,
+      password: password.value,
+      displayName: displayName.value,
+    });
   }
 
-  async close({
-    jwt,
-  }: CloseAccountParams): Promise<Result<CloseAccountResult, AppError>> {
-    const verified = this.jwt.verify(jwt);
-    if (verified.isFailure())
+  async create(param: {
+    loginId: string;
+    password: string;
+    displayName: string;
+  }): Promise<Result<number, AppError>> {
+    const validation = this.validate(param);
+    if (validation.isFailure())
       return failure(
-        AppError.by(verified.error, "AuthenticationFailed", "invalid JWT token")
+        AppError.by(validation.error, "InvalidParams", "Validation failed")
       );
-    const loginId = verified.value;
-    return this.database
-      .tx(async (task) => {
-        const selectStatus = sql`
-          SELECT ${Accounts.columns.status} FROM ${Accounts.tableName} WHERE ${Accounts.columns.loginId}=$1
-        `.with(loginId);
-        const row = await task.oneOrNone<{ status: Account["status"] }>(
-          selectStatus
-        );
-        if (row == null)
-          return failure(
-            new AppError("TargetNotFound", "loginId is not found in database")
-          );
-        if (row.status === "CLOSED")
-          return failure(
-            new AppError("ForbiddenOperation", "Account already closed")
-          );
-        const updateUser = sql`
-          UPDATE ${Accounts.tableName} SET ${Accounts.columns.status}=$1 WHERE ${Accounts.columns.loginId}=$2;
-        `.with("CLOSED", loginId);
-        return task.none(updateUser).then(() => success({}));
+    const { loginId, password, displayName } = validation.value;
+    const passwordHash = await bcrypt.hash(password, 10);
+    const insertUser = sql`
+      INSERT INTO ${Accounts.tableName} (${AccountColumns.loginId},${AccountColumns.passwordHash}, ${AccountColumns.displayName}, ${AccountColumns.status}) 
+      VALUES ($1, $2, $3, $4)
+      RETURNING *;
+    `.with(loginId, passwordHash, displayName, "OPEN");
+    const inserton = this.task
+      .one<AccountRow>(insertUser)
+      .then((row) => success(row["account_id"]));
+    return inserton
+      .catch((e) => {
+        if (e instanceof PostgresError)
+          if (e.code === IntegrityConstraintViolation.unique_violation)
+            return failure(
+              AppError.by(e, "InvalidState", "loginId is not available")
+            );
+        throw e;
       })
       .catch(appErrorOnDatabase);
   }
 
-  async issueToken({
-    loginId,
-    password,
-  }: IssueTokenParams): Promise<Result<IssueTokenResult, AppError>> {
-    const selectAccount = sql`
-      SELECT ${Accounts.columns.passwordHash}, ${Accounts.columns.status} FROM ${Accounts.tableName} 
-      WHERE ${Accounts.columns.loginId}=$1;
-    `.with(loginId);
-    const promiseRow = this.database.oneOrNone<{
-      password_hash: string;
-      status: Account["status"];
-    }>(selectAccount);
-    return promiseRow
+  async close(accountId: number): Promise<Result<void, AppError>> {
+    return this.task
+      .oneOrNone<AccountRow>(
+        sql`SELECT * FROM ${Accounts.tableName} WHERE ${AccountColumns.accountId}=$1`.with(
+          accountId
+        )
+      )
       .then(async (row) => {
         if (row == null)
           return failure(
-            new AppError("TargetNotFound", "Specified loginId is not found")
+            new AppError("TargetNotFound", "accountId is not found in database")
           );
         if (row.status === "CLOSED")
           return failure(
-            new AppError("ForbiddenOperation", "Specified loginId cannot login")
+            new AppError("ForbiddenOperation", "Account is already closed")
           );
-        const matched = await bcrypt.compare(password, row.password_hash);
-        if (!matched)
-          return failure(
-            new AppError(
-              "AuthenticationFailed",
-              "Wrong password for specified loginId"
-            )
-          );
-        return success({ jwt: this.jwt.issue(loginId) });
+        const updateUser = sql`
+          UPDATE ${Accounts.tableName} SET ${AccountColumns.status}=$1 WHERE ${AccountColumns.accountId}=$2;
+        `.with("CLOSED", accountId);
+        return await this.task.none(updateUser).then(() => success(undefined));
       })
       .catch(appErrorOnDatabase);
   }
 
-  async verifyToken({
-    jwt,
-  }: VerifyTokenParams): Promise<Result<VerifyTokenResult, AppError>> {
+  async authenticate({
+    loginId,
+    password,
+  }: {
+    loginId: string;
+    password: string;
+  }): Promise<Result<number, AppError>> {
+    return this.task
+      .oneOrNone<AccountRow>(
+        sql`SELECT * FROM ${Accounts.tableName} WHERE ${AccountColumns.loginId}=$1`.with(
+          loginId
+        )
+      )
+      .then((row) => {
+        if (row == null || row.status === "CLOSED")
+          return failure(
+            new AppError("AuthenticationFailed", "loginId is not available")
+          );
+        if (!bcrypt.compareSync(password, row.password_hash))
+          return failure(
+            new AppError("AuthenticationFailed", "Password mismatch")
+          );
+        return success(row.account_id);
+      })
+      .catch(appErrorOnDatabase);
+  }
+
+  async issueToken(accountId: number): Promise<Result<string, AppError>> {
+    return this.task
+      .oneOrNone<Account>(
+        sql`SELECT * FROM ${Accounts.tableName} WHERE ${AccountColumns.accountId}=$1;`.with(
+          accountId
+        )
+      )
+      .then(async (row) => {
+        if (row == null || row.status === "CLOSED")
+          return failure(
+            new AppError("AuthenticationFailed", "accountId is not available")
+          );
+        return success(this.jwt.issue({ accountId: row.accountId }));
+      })
+      .catch(appErrorOnDatabase);
+  }
+
+  async verifyToken(jwt: string): Promise<Result<number, AppError>> {
     const verified = this.jwt.verify(jwt);
     if (verified.isFailure())
       return failure(
         AppError.by(verified.error, "ForbiddenAccess", "invalid JWT token")
       );
-    const loginId = verified.value;
-    return this.database
-      .tx(async (task) => {
-        const selectStatus = sql`
-          SELECT ${Accounts.columns.status} FROM ${Accounts.tableName} WHERE ${Accounts.columns.loginId}=$1
-        `.with(loginId);
-        const row = await task.oneOrNone<{ status: Account["status"] }>(
-          selectStatus
-        );
-        if (row == null)
+    const accountId = verified.value.accountId;
+    const selectStatus = sql`SELECT * FROM ${Accounts.tableName} WHERE ${AccountColumns.accountId}=$1`.with(
+      accountId
+    );
+    return this.task
+      .oneOrNone<AccountRow>(selectStatus)
+      .then((row) => {
+        if (row == null || row.status === "CLOSED")
           return failure(
-            new AppError("ForbiddenAccess", "loginId is not found in database")
+            new AppError("ForbiddenAccess", "Account id is not available")
           );
-        if (row.status === "CLOSED")
-          return failure(
-            new AppError("ForbiddenAccess", "Account already closed")
-          );
-        return success({});
+        return success(row.account_id);
       })
       .catch(appErrorOnDatabase);
   }
 }
 
-function appErrorOnDatabase(
+export function appErrorOnDatabase(
   e: unknown,
   message?: string
 ): Result<never, AppError> {

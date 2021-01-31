@@ -7,7 +7,7 @@ export async function initialize(
   config: ConnectionConfig
 ): Promise<Result<void, Error>> {
   const database = db.configure(config);
-  return Promise.all([Accounts.initialize(database)]).then((results) =>
+  return Promise.all([Accounts.init(database)]).then((results) =>
     results.reduce((r0, r1) => r0.and(r1))
   );
 }

@@ -1,6 +1,6 @@
 import { AppDatabasePool } from "./AppDatabasePool";
 import { Accounts } from "./lib/app/accounts/Accounts";
-import { Jwt } from "./lib/app/jwt";
+import { Jwt } from "./lib/app/accounts/jwt";
 
 const jwt = new Jwt(
   "secret key",

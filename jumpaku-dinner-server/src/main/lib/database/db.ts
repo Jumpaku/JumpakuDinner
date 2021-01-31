@@ -4,9 +4,8 @@ import {
   IConnectionParameters,
   IClient,
 } from "pg-promise/typescript/pg-subset";
-import { Result, resultOf, success } from "../common/result";
-import { QueryStatement as QueryStatement } from "./sql";
-import { DatabaseError, PostgresError, databaseErrorOnQuery } from "./error";
+import { Result, resultOf } from "../common/result";
+import { DatabaseError, PostgresError } from "./error";
 
 export type Database = IDatabase<{}, IClient>;
 export type ConnectionConfig = IConnectionParameters;

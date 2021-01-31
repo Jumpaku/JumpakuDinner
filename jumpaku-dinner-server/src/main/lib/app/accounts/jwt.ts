@@ -1,10 +1,10 @@
-import { failure, Result, resultOf, success } from "../common/result";
+import { failure, Result, resultOf, success } from "../../common/result";
 import jwt from "jsonwebtoken";
 import { BaseError } from "make-error-cause";
 import * as typing from "io-ts";
 
 export class JwtError extends BaseError {
-  name: string = "JwtError";
+  readonly name: string = "JwtError";
   constructor(message: string, cause?: Error) {
     super(message, cause);
   }
@@ -14,7 +14,7 @@ export class JwtError extends BaseError {
 }
 
 export type IssueOptions = jwt.SignOptions & {
-  algorithm: Exclude<jwt.SignOptions["algorithm"], undefined>;
+  algorithm: NonNullable<jwt.SignOptions["algorithm"]>;
   subject: NonNullable<jwt.SignOptions["subject"]>;
   issuer: NonNullable<jwt.SignOptions["issuer"]>;
   audience: NonNullable<jwt.SignOptions["audience"]>;

@@ -1,4 +1,6 @@
-interface IOption<T> {
+import { panic } from "./panic";
+
+interface IOption<T> extends ArrayLike<T>, Iterable<T> {
   isSome(): this is Some<T>;
   isNone(): this is None<T>;
   flatMap<U>(f: (value: T) => Option<U>): Option<U>;
@@ -15,6 +17,9 @@ interface IOption<T> {
   ifAbsent(f: () => void): Option<T>;
   and<U>(other: Option<U>): Option<T | U>;
   or<U>(other: Option<U>): Option<T | U>;
+  readonly length: 0 | 1;
+  [index: number]: T;
+  [Symbol.iterator]: () => Iterator<T>;
 }
 
 class Some<T> implements IOption<T> {
@@ -68,7 +73,17 @@ class Some<T> implements IOption<T> {
   or<U>(other: Option<U>): Option<T | U> {
     return other;
   }
+  readonly length = 1;
+  [index: number]: T;
+  0 = this.value;
+  [Symbol.iterator] = (): Iterator<T> => {
+    const value = this.value;
+    return (function* () {
+      yield value;
+    })();
+  };
 }
+const i = new Some("A")[Symbol.iterator];
 
 class None<T = never> implements IOption<T> {
   static readonly instance = new None();
@@ -122,6 +137,9 @@ class None<T = never> implements IOption<T> {
   or<U>(other: Option<U>): Option<T | U> {
     return this;
   }
+  readonly length = 0;
+  [index: number]: T;
+  [Symbol.iterator] = (): Iterator<T> => (function* () {})();
 }
 
 type Option<T> = Some<T> | None<T>;

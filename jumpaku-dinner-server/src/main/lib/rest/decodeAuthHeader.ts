@@ -1,5 +1,5 @@
 import validator from "validator";
-import { JwtElement } from "../app/jwt";
+import { JwtElement } from "../app/accounts/jwt";
 import { failure, Result, success } from "../common/result";
 import { ApiError } from "./ApiError";
 
