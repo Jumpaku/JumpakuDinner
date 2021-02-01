@@ -1,27 +1,34 @@
-import express, { IRoute, IRouter } from "express";
-import { v2Router } from "./router/v2";
-import { initialize as initDB } from "./init";
+import express from "express";
+import { v2Router } from "./routing/v2";
+import { createAppState } from "./state/AppState";
 
 const main = async () => {
-  await initDB({
-    host: "test-db",
-    port: 5432,
-    user: "postgres_user",
-    password: "postgres_password",
-    database: "postgres_database",
-  });
+  const { config, state } = (
+    await createAppState({
+      url: "https://localhost",
+      database: {
+        name: "postgres_database",
+        user: "postgres_user",
+        password: "postgres_password",
+        host: "test-db",
+      },
+      jwt: {
+        secretKey: "secret key",
+      },
+    })
+  ).orThrow();
 
-  let app = express();
+  let server = express();
   const port = 3000;
 
-  app.get("/", (req, res) => {
+  server.get("/", (req, res) => {
     res.send("Jumpaku Dinner!");
   });
 
-  app.use("/v2", v2Router());
+  server.use("/v2", v2Router(state));
 
-  app.listen(port, () => {
-    console.log(`Example app listening at http://localhost:${port}`);
+  server.listen(port, () => {
+    console.log(`Example app listening at ${config.url}`);
   });
 };
 main();

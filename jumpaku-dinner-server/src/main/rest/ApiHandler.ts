@@ -1,10 +1,10 @@
 import { Request, Response, RequestHandler, NextFunction } from "express";
-import { getLogger } from "../../logger";
 import { Status } from "./status";
 import { ApiError, ApiErrorType } from "./ApiError";
 import { Result } from "../common/result";
 import { JwtElement } from "../app/accounts/jwt";
 import { decodeAuthHeader } from "./decodeAuthHeader";
+import { AppState } from "../state/AppState";
 
 export type FailureResponse = {
   tag: "Failure";
@@ -29,7 +29,7 @@ export type ApiRequest<P> = {
 };
 
 export abstract class ApiHandler<HandlerParams, HandlerResult> {
-  constructor(readonly requiresAuth: boolean) {}
+  constructor(readonly state: AppState, readonly requiresAuth: boolean) {}
   abstract handle({
     params,
   }: ApiRequest<HandlerParams>): Promise<ApiResponse<HandlerResult>>;
@@ -49,8 +49,10 @@ export abstract class ApiHandler<HandlerParams, HandlerResult> {
           : this.handle({ auth: auth.value, params: body.value });
       result
         .then((r) => res.status(r.status).json(r.body))
-        .then(() => getLogger().info(req.method, req.originalUrl, res.status))
-        .catch((e) => getLogger().fatal(e))
+        .then(() =>
+          this.state.logger().info(req.method, req.originalUrl, res.status)
+        )
+        .catch((e) => this.state.logger().fatal(e))
         .finally(next);
     };
   }

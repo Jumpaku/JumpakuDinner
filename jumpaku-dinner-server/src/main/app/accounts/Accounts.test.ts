@@ -390,9 +390,7 @@ describe("Accounts.close()", () => {
       status: "CLOSED",
     } as const,
   ];
-  beforeEach(() => {
-    return createAndInsert(rows);
-  });
+  beforeEach(() => createAndInsert(rows));
   it("closes account if it exists and is open", async () => {
     const a = await accounts((m) => m.close(1));
     expect(a.isSuccess()).toEqual(true);
@@ -434,9 +432,7 @@ describe("Accounts.authenticate()", () => {
       status: "CLOSED",
     } as const,
   ];
-  beforeEach(() => {
-    return createAndInsert(rows);
-  });
+  beforeEach(() => createAndInsert(rows));
   it("authenticates loginId", async () => {
     const a = await accounts((m) =>
       m.authenticate({ loginId: "open-user", password: "test-password-0" })
@@ -488,9 +484,7 @@ describe("Accounts.issueToken()", () => {
       status: "CLOSED",
     } as const,
   ];
-  beforeEach(() => {
-    return createAndInsert(rows);
-  });
+  beforeEach(() => createAndInsert(rows));
   it("issues JWT token", async () => {
     const a = await accounts((m) => m.issueToken(1));
     expect(a.isSuccess()).toEqual(true);
@@ -511,4 +505,37 @@ describe("Accounts.issueToken()", () => {
   });
 });
 
-describe("Accounts.verifyToken()", () => {});
+describe("Accounts.verifyToken()", () => {
+  const rows = [
+    {
+      loginId: "open-user",
+      displayName: "open-user-display-name",
+      passwordHash:
+        "$2b$10$iZIw4t1yv.o1cScRFlcEreKCpjV3zzXYMFNMsd0Y2XYG73RAwnIIG" /* bcript.hash("test-password-0",10) */,
+      status: "OPEN",
+    } as const,
+    {
+      loginId: "closed-user",
+      displayName: "closed-user-display-name",
+      passwordHash:
+        "$2b$10$TUsOd06DnGUkPlLGtH7mu.QTDBH38dEu.0uno8nrnJilfOTC.Yrcm" /* bcript.hash("test-password-1",10) */,
+      status: "CLOSED",
+    } as const,
+  ];
+  beforeEach(() => createAndInsert(rows));
+  it("verifies token", async () => {
+    const { value: token } = await accounts((m) => m.issueToken(1));
+    const { value } = await accounts((m) => m.verifyToken(token!!));
+    expect(value).toEqual(1);
+  });
+  it("fails verification if token is invalid", async () => {
+    const { error } = await accounts((m) => m.verifyToken("invalid token"!!));
+    expectAuthenticationError(error, "Invalid JWT token");
+  });
+  it("fails verification if account is closed", async () => {
+    const { value: token } = await accounts((m) => m.issueToken(1));
+    await accounts((m) => m.close(1));
+    const { error } = await accounts((m) => m.verifyToken(token!!));
+    expectAuthenticationError(error, "Account is not available");
+  });
+});

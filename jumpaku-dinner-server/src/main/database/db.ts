@@ -5,7 +5,7 @@ import {
   IClient,
 } from "pg-promise/typescript/pg-subset";
 import { Result, resultOf } from "../common/result";
-import { DatabaseError, PostgresError } from "./error";
+import { DatabaseError, PostgresDatabaseError } from "./error";
 
 export type Database = IDatabase<{}, IClient>;
 export type ConnectionConfig = IConnectionParameters;
@@ -18,7 +18,7 @@ export function connect(
   return resultOf(
     () => pgInstance(options),
     (e) => {
-      if (e instanceof PostgresError)
+      if (e instanceof PostgresDatabaseError)
         return new DatabaseError(
           "ConfigError",
           "Invalid configuration of database connection",

@@ -2,9 +2,8 @@ import { Database } from "../../database/db";
 import { sql } from "../../database/sql";
 import { failure, Result, success } from "../../common/result";
 import * as bcrypt from "bcrypt";
-import { PostgresError, DatabaseError } from "../../database/error";
 import { IntegrityConstraintViolation } from "../../database/pgErrorCodes";
-import { AppError } from "../AppError";
+import { AppError, catchAppErrorOnDatabase } from "../AppError";
 import {
   validateDisplayName,
   validateLoginId,
@@ -13,6 +12,7 @@ import {
 import pg from "pg-promise";
 import * as JWT from "./jwt";
 import { IAccountsModel, IAccountsExecutor } from "./IAccounts";
+import { PostgresDatabaseError } from "../../database/error";
 
 export type AccountRow = {
   account_id: number;
@@ -55,13 +55,16 @@ export class Accounts implements IAccountsExecutor {
       )
       .then(() => success(undefined))
       .catch((e) =>
-        appErrorOnDatabase(
+        catchAppErrorOnDatabase(
           e,
           `Failed database initialization on create table '${this.name}'`
         )
       );
   }
-  constructor(readonly database: Database, readonly jwt: JWT.Jwt) {}
+  constructor(
+    private readonly database: Database,
+    private readonly jwt: JWT.Jwt
+  ) {}
   exec<T>(
     f: (model: IAccountsModel) => Promise<Result<T, AppError>>
   ): Promise<Result<T, AppError>> {
@@ -72,7 +75,7 @@ export class Accounts implements IAccountsExecutor {
           ? Promise.resolve(result)
           : Promise.reject(result);
       })
-      .catch((result: Result<T, AppError>) => result);
+      .catch<Result<T, AppError>>((e) => e);
   }
 }
 
@@ -142,14 +145,14 @@ class AccountsModel implements IAccountsModel {
       .then((row) => success(row["account_id"]));
     return inserton
       .catch((e) => {
-        if (e instanceof PostgresError)
+        if (e instanceof PostgresDatabaseError)
           if (e.code === IntegrityConstraintViolation.unique_violation)
             return failure(
               AppError.by(e, "InvalidState", "loginId is not available")
             );
         throw e;
       })
-      .catch(appErrorOnDatabase);
+      .catch(catchAppErrorOnDatabase);
   }
 
   async close(accountId: number): Promise<Result<void, AppError>> {
@@ -173,7 +176,7 @@ class AccountsModel implements IAccountsModel {
         `.with("CLOSED", accountId);
         return await this.task.none(updateUser).then(() => success(undefined));
       })
-      .catch(appErrorOnDatabase);
+      .catch(catchAppErrorOnDatabase);
   }
 
   async authenticate({
@@ -200,12 +203,12 @@ class AccountsModel implements IAccountsModel {
           );
         return success(row.account_id);
       })
-      .catch(appErrorOnDatabase);
+      .catch(catchAppErrorOnDatabase);
   }
 
   async issueToken(accountId: number): Promise<Result<string, AppError>> {
     return this.task
-      .oneOrNone<Account>(
+      .oneOrNone<AccountRow>(
         sql`SELECT * FROM ${Accounts.tableName} WHERE ${AccountColumns.accountId}=$1;`.with(
           accountId
         )
@@ -215,16 +218,16 @@ class AccountsModel implements IAccountsModel {
           return failure(
             new AppError("AuthenticationFailed", "accountId is not available")
           );
-        return success(this.jwt.issue({ accountId: row.accountId }));
+        return success(this.jwt.issue({ accountId: row.account_id }));
       })
-      .catch(appErrorOnDatabase);
+      .catch(catchAppErrorOnDatabase);
   }
 
   async verifyToken(jwt: string): Promise<Result<number, AppError>> {
     const verified = this.jwt.verify(jwt);
     if (verified.isFailure())
       return failure(
-        AppError.by(verified.error, "ForbiddenAccess", "invalid JWT token")
+        AppError.by(verified.error, "AuthenticationFailed", "Invalid JWT token")
       );
     const accountId = verified.value.accountId;
     const selectStatus = sql`SELECT * FROM ${Accounts.tableName} WHERE ${AccountColumns.accountId}=$1`.with(
@@ -235,26 +238,10 @@ class AccountsModel implements IAccountsModel {
       .then((row) => {
         if (row == null || row.status === "CLOSED")
           return failure(
-            new AppError("ForbiddenAccess", "Account id is not available")
+            new AppError("AuthenticationFailed", "Account is not available")
           );
         return success(row.account_id);
       })
-      .catch(appErrorOnDatabase);
+      .catch(catchAppErrorOnDatabase);
   }
-}
-
-export function appErrorOnDatabase(
-  e: unknown,
-  message?: string
-): Result<never, AppError> {
-  if (
-    e instanceof DatabaseError ||
-    e instanceof PostgresError ||
-    e instanceof pg.errors.ParameterizedQueryError ||
-    e instanceof pg.errors.PreparedStatementError ||
-    e instanceof pg.errors.QueryFileError ||
-    e instanceof pg.errors.QueryResultError
-  )
-    return failure(AppError.by(e, "DatabaseError", message));
-  throw e;
 }

@@ -1,9 +1,10 @@
 import { BaseError } from "make-error-cause";
 import pg from "pg-promise";
 import { failure, ResultError } from "../common/result";
-import { DatabaseError as PostgresError } from "pg-protocol";
+import { DatabaseError as PostgresDatabaseError } from "pg-protocol";
 
-export { PostgresError };
+export { DatabaseError as PostgresDatabaseError } from "pg-protocol";
+export { errors as pgErrors } from "pg-promise";
 
 export type DatabaseErrorType =
   | "ConfigError"
@@ -19,8 +20,8 @@ export class DatabaseError extends BaseError {
   ) {
     super(message, cause instanceof Error ? cause : undefined);
   }
-  causedByPostgresError(): this is { cause: PostgresError } {
-    return this.cause instanceof PostgresError;
+  causedByPostgresError(): this is { cause: PostgresDatabaseError } {
+    return this.cause instanceof PostgresDatabaseError;
   }
   causedByError(): this is { cause: Error } {
     return this.cause instanceof Error;
@@ -36,7 +37,7 @@ export const databaseErrorOnQuery = (e: unknown) => {
     return failure(
       new DatabaseError("QueryResultError", "Failed decoding row", e)
     );
-  if (e instanceof PostgresError)
+  if (e instanceof PostgresDatabaseError)
     return failure(
       new DatabaseError("QueryError", "Failed executing query", e)
     );
