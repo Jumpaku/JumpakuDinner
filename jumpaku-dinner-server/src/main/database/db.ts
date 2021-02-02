@@ -4,7 +4,7 @@ import {
   IConnectionParameters,
   IClient,
 } from "pg-promise/typescript/pg-subset";
-import { Result, resultOf } from "../common/result";
+import { Result, resultOf } from "../common/Result";
 import { DatabaseError, PostgresDatabaseError } from "./error";
 
 export type Database = IDatabase<{}, IClient>;

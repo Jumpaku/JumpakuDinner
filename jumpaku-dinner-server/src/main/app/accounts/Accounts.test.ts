@@ -5,7 +5,7 @@ import { IAccountsModel } from "../accounts/IAccounts";
 import { Accounts, Account, AccountRow } from "../accounts/Accounts";
 import { Jwt } from "./jwt";
 import { AppError } from "../AppError";
-import { Result } from "../../common/result";
+import { Result } from "../../common/Result";
 
 let db: unknown;
 beforeAll(() => {

@@ -1,4 +1,4 @@
-import { Result } from "../../common/result";
+import { Result } from "../../common/Result";
 import { AppError } from "../AppError";
 
 export interface IAccountsExecutor {

@@ -1,5 +1,5 @@
 import express from "express";
-import { v2Router } from "./routing/v2";
+import { v2Router } from "./api/routing/v2";
 import { createAppState } from "./state/AppState";
 
 const main = async () => {

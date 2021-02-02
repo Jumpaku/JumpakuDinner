@@ -3,7 +3,7 @@ import { decodeRequestBody } from "../decodeRequestBody";
 import { ApiError } from "../ApiError";
 import { ApiHandler, ApiRequest, ApiResponse } from "../ApiHandler";
 import T from "io-ts";
-import { Result } from "../../common/result";
+import { Result } from "../../common/Result";
 import { AppState } from "../../state/AppState";
 
 const SignupParams = T.type({

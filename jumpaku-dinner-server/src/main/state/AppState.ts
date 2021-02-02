@@ -3,7 +3,7 @@ import { DeepReadonly, DeepRequired } from "ts-essentials";
 import { Accounts } from "../app/accounts/Accounts";
 import { Jwt } from "../app/accounts/jwt";
 import { AppError } from "../app/AppError";
-import { failure, Result, success } from "../common/result";
+import { failure, Result, success } from "../common/Result";
 import { connect, Database } from "../database/db";
 import { Config, fillConfig } from "./Config";
 

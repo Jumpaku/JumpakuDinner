@@ -1,4 +1,4 @@
-import { failure, Result, success } from "../common/result";
+import { failure, Result, success } from "../common/Result";
 import { BaseError } from "make-error-cause";
 
 export class ValidationError extends BaseError {

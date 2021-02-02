@@ -1,5 +1,5 @@
 import validator from "validator";
-import { Result } from "../../common/result";
+import { Result } from "../../common/Result";
 import { ValidationError, Validator } from "../Validator";
 
 export function validateLoginId(

@@ -4,7 +4,7 @@ import { ApiHandler, ApiRequest, ApiResponse } from "../ApiHandler";
 import { Status } from "../status";
 import T from "io-ts";
 import { JwtElement } from "../../app/accounts/jwt";
-import { Result } from "../../common/result";
+import { Result } from "../../common/Result";
 import { AppError } from "../../app/AppError";
 import { AppState } from "../../state/AppState";
 

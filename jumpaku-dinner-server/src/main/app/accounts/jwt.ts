@@ -1,4 +1,4 @@
-import { failure, Result, resultOf, success } from "../../common/result";
+import { failure, Result, resultOf, success } from "../../common/Result";
 import jwt from "jsonwebtoken";
 import { BaseError } from "make-error-cause";
 import * as typing from "io-ts";

@@ -1,7 +1,7 @@
 import { Request, Response, RequestHandler, NextFunction } from "express";
 import { Status } from "./status";
 import { ApiError, ApiErrorType } from "./ApiError";
-import { Result } from "../common/result";
+import { Result } from "../common/Result";
 import { JwtElement } from "../app/accounts/jwt";
 import { decodeAuthHeader } from "./decodeAuthHeader";
 import { AppState } from "../state/AppState";
@@ -45,7 +45,7 @@ export abstract class ApiHandler<HandlerParams, HandlerResult> {
         this.requiresAuth && auth.isFailure()
           ? Promise.resolve(ApiError.by(auth.error).response())
           : body.isFailure()
-          ? Promise.resolve(ApiError.by(auth.error).response())
+          ? Promise.resolve(ApiError.by(body.error).response())
           : this.handle({ auth: auth.value, params: body.value });
       result
         .then((r) => res.status(r.status).json(r.body))

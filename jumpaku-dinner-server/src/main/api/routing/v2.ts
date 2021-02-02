@@ -1,5 +1,5 @@
 import express from "express";
-import { AppState } from "../state/AppState";
+import { AppState } from "../../state/AppState";
 import { accountsRouter } from "./v2/accounts";
 import { tokenRouter } from "./v2/token";
 

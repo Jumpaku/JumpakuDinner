@@ -1,7 +1,7 @@
 import express from "express";
-import { SignupHandler } from "../../rest/handlers/SignupHandler";
-import { CloseHandler } from "../../rest/handlers/CloseHandler";
-import { AppState } from "../../state/AppState";
+import { SignupHandler } from "../../handlers/SignupHandler";
+import { CloseHandler } from "../../handlers/CloseHandler";
+import { AppState } from "../../../state/AppState";
 
 export const accountsRouter = (state: AppState) => {
   const router = express.Router();

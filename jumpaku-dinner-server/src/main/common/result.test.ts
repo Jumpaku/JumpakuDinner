@@ -6,52 +6,47 @@ import {
   resultOfAsync,
   tryCatch,
   ResultError,
-} from "./result";
+} from "./Result";
 
 describe("Generating Results", () => {
   it("generates success", () => {
-    const { value, error, errorHistory } = success(1);
+    const { value, error } = success(1);
     expect(value).toEqual(1);
     expect(error).toEqual(undefined);
-    expect(errorHistory).toEqual(undefined);
   });
 
   describe("failure", () => {
-    const { value, error, errorHistory } = failure("Error");
+    const { value, error } = failure("Error");
     expect(value).toEqual(undefined);
     expect(error).toEqual("Error");
-    expect(errorHistory).toEqual(["Error"]);
   });
 
   describe("resultOf", () => {
     it("generates success without catching", () => {
-      const { value, error, errorHistory } = resultOf(() => 1);
+      const { value, error } = resultOf(() => 1);
       expect(value).toEqual(1);
       expect(error).toEqual(undefined);
-      expect(errorHistory).toEqual(undefined);
     });
 
     it("generates success with catching", () => {
-      const { value, error, errorHistory } = resultOf(
+      const { value, error } = resultOf(
         () => 1,
         (e) => "Caught"
       );
       expect(value).toEqual(1);
       expect(error).toEqual(undefined);
-      expect(errorHistory).toEqual(undefined);
     });
 
     it("generates failure with unknown error", () => {
-      const { value, error, errorHistory } = resultOf(() => {
+      const { value, error } = resultOf(() => {
         throw "Error";
       });
       expect(value).toEqual(undefined);
       expect(error).toEqual("Error");
-      expect(errorHistory).toEqual(["Error"]);
     });
 
     it("generates failure catching error", () => {
-      const { value, error, errorHistory } = resultOf(
+      const { value, error } = resultOf(
         () => {
           throw "Error";
         },
@@ -59,38 +54,34 @@ describe("Generating Results", () => {
       );
       expect(value).toEqual(undefined);
       expect(error).toEqual("Caught");
-      expect(errorHistory).toEqual(["Caught"]);
     });
   });
 
   describe("tryCatch generates a function", () => {
     it("returns success without catching", () => {
-      const { value, error, errorHistory } = tryCatch(() => 1)();
+      const { value, error } = tryCatch(() => 1)();
       expect(value).toEqual(1);
       expect(error).toEqual(undefined);
-      expect(errorHistory).toEqual(undefined);
     });
 
     it("returns success with catching", () => {
-      const { value, error, errorHistory } = tryCatch(
+      const { value, error } = tryCatch(
         () => 1,
         (e) => "Caught"
       )();
       expect(value).toEqual(1);
       expect(error).toEqual(undefined);
-      expect(errorHistory).toEqual(undefined);
     });
 
     it("returns failure with unknown error", () => {
-      const { value, error, errorHistory } = tryCatch(() => {
+      const { value, error } = tryCatch(() => {
         throw "Error";
       })();
       expect(value).toEqual(undefined);
       expect(error).toEqual("Error");
-      expect(errorHistory).toEqual(["Error"]);
     });
     it("returns failure catching error", () => {
-      const { value, error, errorHistory } = tryCatch(
+      const { value, error } = tryCatch(
         () => {
           throw "Error";
         },
@@ -98,7 +89,6 @@ describe("Generating Results", () => {
       )();
       expect(value).toEqual(undefined);
       expect(error).toEqual("Caught");
-      expect(errorHistory).toEqual(["Caught"]);
     });
   });
 
@@ -107,9 +97,6 @@ describe("Generating Results", () => {
       const a = resultOfAsync(async () => 1);
       await expect(a.then(({ value }) => value)).resolves.toEqual(1);
       await expect(a.then(({ error }) => error)).resolves.toEqual(undefined);
-      await expect(a.then(({ errorHistory }) => errorHistory)).resolves.toEqual(
-        undefined
-      );
     });
     it("resolves success with catching", async () => {
       const a = resultOfAsync(
@@ -118,9 +105,6 @@ describe("Generating Results", () => {
       );
       await expect(a.then(({ value }) => value)).resolves.toEqual(1);
       await expect(a.then(({ error }) => error)).resolves.toEqual(undefined);
-      await expect(a.then(({ errorHistory }) => errorHistory)).resolves.toEqual(
-        undefined
-      );
     });
 
     it("resolves failure with unknown error", async () => {
@@ -129,9 +113,6 @@ describe("Generating Results", () => {
       });
       await expect(a.then(({ value }) => value)).resolves.toEqual(undefined);
       await expect(a.then(({ error }) => error)).resolves.toEqual("Error");
-      await expect(
-        a.then(({ errorHistory }) => errorHistory)
-      ).resolves.toEqual(["Error"]);
     });
     it("resolves failure catching error", async () => {
       const a = resultOfAsync(
@@ -142,9 +123,6 @@ describe("Generating Results", () => {
       );
       await expect(a.then(({ value }) => value)).resolves.toEqual(undefined);
       await expect(a.then(({ error }) => error)).resolves.toEqual("Caught");
-      await expect(
-        a.then(({ errorHistory }) => errorHistory)
-      ).resolves.toEqual(["Caught"]);
     });
   });
 });
@@ -179,56 +157,45 @@ describe("Methods of Success", () => {
     expect(a.orUndefined()).toEqual(1);
   });
   test("map", () => {
-    const { value, error, errorHistory } = a.map((v) => `${v + 1}`);
+    const { value, error } = a.map((v) => `${v + 1}`);
     expect(value).toEqual("2");
     expect(error).toEqual(undefined);
-    expect(errorHistory).toEqual(undefined);
   });
   describe("flatMap", () => {
     it("successfully maps", () => {
-      const { value, error, errorHistory } = a.flatMap((v) => success(v + 1));
+      const { value, error } = a.flatMap((v) => success(v + 1));
       expect(value).toEqual(2);
       expect(error).toEqual(undefined);
-      expect(errorHistory).toEqual(undefined);
     });
 
     it("fails", () => {
-      const { value, error, errorHistory } = a.flatMap(() =>
-        failure("Next Error")
-      );
+      const { value, error } = a.flatMap(() => failure("Next Error"));
       expect(value).toEqual(undefined);
       expect(error).toEqual("Next Error");
-      expect(errorHistory).toEqual(["Next Error"]);
     });
   });
   test("recover", () => {
-    const { value, error, errorHistory } = a.recover(() => 2);
+    const { value, error } = a.recover(() => 2);
     expect(value).toEqual(1);
     expect(error).toEqual(undefined);
-    expect(errorHistory).toEqual(undefined);
   });
   describe("flatRecover", () => {
     it("does nothing when source is success", () => {
-      const { value, error, errorHistory } = a.flatRecover(() => success(2));
+      const { value, error } = a.flatRecover(() => success(2));
       expect(value).toEqual(1);
       expect(error).toEqual(undefined);
-      expect(errorHistory).toEqual(undefined);
     });
 
     it("does nothing even if recovery fails", () => {
-      const { value, error, errorHistory } = a.flatRecover(() =>
-        failure("Error")
-      );
+      const { value, error } = a.flatRecover(() => failure("Error"));
       expect(value).toEqual(1);
       expect(error).toEqual(undefined);
-      expect(errorHistory).toEqual(undefined);
     });
   });
   test("mapErrors", () => {
-    const { value, error, errorHistory } = a.mapErrors(() => "Mapped");
+    const { value, error } = a.mapErrors(() => "Mapped");
     expect(value).toEqual(1);
     expect(error).toEqual(undefined);
-    expect(errorHistory).toEqual(undefined);
   });
   test("onSuccess", () => {
     let x = 0;
@@ -281,56 +248,45 @@ describe("Methods of Failure", () => {
     expect(a.orUndefined()).toEqual(undefined);
   });
   test("map", () => {
-    const { value, error, errorHistory } = a.map((v) => `${v + 1}`);
+    const { value, error } = a.map((v) => `${v + 1}`);
     expect(value).toEqual(undefined);
     expect(error).toEqual("Error");
-    expect(errorHistory).toEqual(["Error"]);
   });
   describe("flatMap", () => {
     it("is already failed", () => {
-      const { value, error, errorHistory } = a.flatMap((v) => success(v + 1));
+      const { value, error } = a.flatMap((v) => success(v + 1));
       expect(value).toEqual(undefined);
       expect(error).toEqual("Error");
-      expect(errorHistory).toEqual(["Error"]);
     });
 
     it("has still previous error", () => {
-      const { value, error, errorHistory } = a.flatMap(() =>
-        failure("Next Error")
-      );
+      const { value, error } = a.flatMap(() => failure("Next Error"));
       expect(value).toEqual(undefined);
       expect(error).toEqual("Error");
-      expect(errorHistory).toEqual(["Error"]);
     });
   });
   test("recover", () => {
-    const { value, error, errorHistory } = a.recover(() => 2);
+    const { value, error } = a.recover(() => 2);
     expect(value).toEqual(2);
     expect(error).toEqual(undefined);
-    expect(errorHistory).toEqual(undefined);
   });
   describe("flatRecover", () => {
     it("succeeds with recovered value", () => {
-      const { value, error, errorHistory } = a.flatRecover(() => success(2));
+      const { value, error } = a.flatRecover(() => success(2));
       expect(value).toEqual(2);
       expect(error).toEqual(undefined);
-      expect(errorHistory).toEqual(undefined);
     });
 
     it("fails with new error", () => {
-      const { value, error, errorHistory } = a.flatRecover((e) =>
-        failure("Next Error")
-      );
+      const { value, error } = a.flatRecover((e) => failure("Next Error"));
       expect(value).toEqual(undefined);
       expect(error).toEqual("Next Error");
-      expect(errorHistory).toEqual(["Error", "Next Error"]);
     });
   });
   test("mapFailure", () => {
-    const { value, error, errorHistory } = a.mapErrors(() => "Mapped");
+    const { value, error } = a.mapErrors(() => "Mapped");
     expect(value).toEqual(undefined);
     expect(error).toEqual("Mapped");
-    expect(errorHistory).toEqual(["Mapped"]);
   });
   test("onSuccess", () => {
     let x = 0;

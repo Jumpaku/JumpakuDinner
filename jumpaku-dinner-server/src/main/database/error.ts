@@ -1,6 +1,6 @@
 import { BaseError } from "make-error-cause";
 import pg from "pg-promise";
-import { failure, ResultError } from "../common/result";
+import { failure, ResultError } from "../common/Result";
 import { DatabaseError as PostgresDatabaseError } from "pg-protocol";
 
 export { DatabaseError as PostgresDatabaseError } from "pg-protocol";

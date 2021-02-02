@@ -1,5 +1,5 @@
 import { describe, expect, test } from "@jest/globals";
-import { nonNull, none, some } from "./option";
+import { nonNull, none, some } from "./Option";
 
 describe("Creation of Option", () => {
   test("none()", () => {

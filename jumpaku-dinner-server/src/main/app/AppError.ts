@@ -1,5 +1,5 @@
 import { BaseError } from "make-error-cause";
-import { failure, Result } from "../common/result";
+import { failure, Result } from "../common/Result";
 import {
   DatabaseError,
   pgErrors,

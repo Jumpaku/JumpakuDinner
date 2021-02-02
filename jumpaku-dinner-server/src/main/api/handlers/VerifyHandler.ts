@@ -3,7 +3,7 @@ import { decodeRequestBody } from "../decodeRequestBody";
 import { ApiHandler, ApiRequest, ApiResponse } from "../ApiHandler";
 import { Status } from "../status";
 import { JwtElement } from "../../app/accounts/jwt";
-import { Result } from "../../common/result";
+import { Result } from "../../common/Result";
 import { AppState } from "../../state/AppState";
 
 const VerifyParams = JwtElement;

@@ -1,5 +1,5 @@
 import typing from "io-ts";
-import { failure, Result, success } from "../common/result";
+import { failure, Result, success } from "../common/Result";
 import { ApiError } from "./ApiError";
 
 export function decodeRequestBody<D>(

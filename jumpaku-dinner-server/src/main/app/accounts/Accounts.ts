@@ -1,6 +1,6 @@
 import { Database } from "../../database/db";
 import { sql } from "../../database/sql";
-import { failure, Result, success } from "../../common/result";
+import { failure, Result, success } from "../../common/Result";
 import * as bcrypt from "bcrypt";
 import { IntegrityConstraintViolation } from "../../database/pgErrorCodes";
 import { AppError, catchAppErrorOnDatabase } from "../AppError";

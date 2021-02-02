@@ -1,7 +1,7 @@
 import { Status } from "../status";
 import { ApiError } from "../ApiError";
 import { ApiHandler, ApiRequest, ApiResponse } from "../ApiHandler";
-import { Result, success } from "../../common/result";
+import { Result, success } from "../../common/Result";
 import { AppError } from "../../app/AppError";
 import { AppState } from "../../state/AppState";
 
