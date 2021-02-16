@@ -1,10 +1,6 @@
 import { BaseError } from "make-error-cause";
 import { failure, Result } from "../common/Result";
-import {
-  DatabaseError,
-  pgErrors,
-  PostgresDatabaseError,
-} from "../database/error";
+import { DatabaseError } from "./database/error";
 
 export type AppErrorType =
   | "AuthenticationFailed"
@@ -45,18 +41,10 @@ export class AppError extends BaseError {
   }
 }
 
-export function catchAppErrorOnDatabase(
+export function catchDatabaseError(
   e: unknown,
   message?: string
 ): Result<never, AppError> {
-  if (
-    e instanceof DatabaseError ||
-    e instanceof PostgresDatabaseError ||
-    e instanceof pgErrors.ParameterizedQueryError ||
-    e instanceof pgErrors.PreparedStatementError ||
-    e instanceof pgErrors.QueryFileError ||
-    e instanceof pgErrors.QueryResultError
-  )
-    return failure(AppError.by(e, "DatabaseError", message));
-  throw e;
+  const caught = DatabaseError.catch(e); // throws e if e is not recognized as DatabaseError
+  return failure(AppError.by(caught, "DatabaseError", message));
 }

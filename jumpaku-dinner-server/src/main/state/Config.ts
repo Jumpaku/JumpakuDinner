@@ -4,7 +4,7 @@ import { DeepPartial, DeepRequired } from "ts-essentials";
 const ConfigOption = T.type({
   url: T.string,
   database: T.type({
-    name: T.string,
+    databaseName: T.string,
     user: T.string,
     password: T.string,
     host: T.string,
@@ -32,7 +32,7 @@ const ConfigOption = T.type({
 
 export type Config = DeepPartial<T.TypeOf<typeof ConfigOption>> & {
   url: string;
-  database: { name: string; user: string; password: string };
+  database: { databaseName: string; user: string; password: string };
   jwt: { secretKey: string };
 };
 
@@ -40,7 +40,7 @@ export function fillConfig(config: Config): DeepRequired<Config> {
   return {
     url: config.url,
     database: {
-      name: config.database.name,
+      databaseName: config.database.databaseName,
       user: config.database.user,
       password: config.database.password,
       host: config.database.host ?? "localhost",

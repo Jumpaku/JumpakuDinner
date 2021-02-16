@@ -1,9 +1,9 @@
-import { Database } from "../../database/db";
-import { sql } from "../../database/sql";
+import { Database } from "../database/db";
+import { sql } from "../database/sql";
 import { failure, Result, success } from "../../common/Result";
 import * as bcrypt from "bcrypt";
-import { IntegrityConstraintViolation } from "../../database/pgErrorCodes";
-import { AppError, catchAppErrorOnDatabase } from "../AppError";
+import { IntegrityConstraintViolation } from "../database/pgErrorCodes";
+import { AppError, catchDatabaseError } from "../AppError";
 import {
   validateDisplayName,
   validateLoginId,
@@ -12,7 +12,7 @@ import {
 import pg from "pg-promise";
 import * as JWT from "./jwt";
 import { IAccountsModel, IAccountsExecutor } from "./IAccounts";
-import { PostgresDatabaseError } from "../../database/error";
+import { PostgresDatabaseError } from "../database/error";
 
 export type AccountRow = {
   account_id: number;
@@ -55,7 +55,7 @@ export class Accounts implements IAccountsExecutor {
       )
       .then(() => success(undefined))
       .catch((e) =>
-        catchAppErrorOnDatabase(
+        catchDatabaseError(
           e,
           `Failed database initialization on create table '${this.name}'`
         )
@@ -152,7 +152,7 @@ class AccountsModel implements IAccountsModel {
             );
         throw e;
       })
-      .catch(catchAppErrorOnDatabase);
+      .catch(catchDatabaseError);
   }
 
   async close(accountId: number): Promise<Result<void, AppError>> {
@@ -176,7 +176,7 @@ class AccountsModel implements IAccountsModel {
         `.with("CLOSED", accountId);
         return await this.task.none(updateUser).then(() => success(undefined));
       })
-      .catch(catchAppErrorOnDatabase);
+      .catch(catchDatabaseError);
   }
 
   async authenticate({
@@ -203,7 +203,7 @@ class AccountsModel implements IAccountsModel {
           );
         return success(row.account_id);
       })
-      .catch(catchAppErrorOnDatabase);
+      .catch(catchDatabaseError);
   }
 
   async issueToken(accountId: number): Promise<Result<string, AppError>> {
@@ -220,7 +220,7 @@ class AccountsModel implements IAccountsModel {
           );
         return success(this.jwt.issue({ accountId: row.account_id }));
       })
-      .catch(catchAppErrorOnDatabase);
+      .catch(catchDatabaseError);
   }
 
   async verifyToken(jwt: string): Promise<Result<number, AppError>> {
@@ -242,6 +242,6 @@ class AccountsModel implements IAccountsModel {
           );
         return success(row.account_id);
       })
-      .catch(catchAppErrorOnDatabase);
+      .catch(catchDatabaseError);
   }
 }
